@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * Node resaver module.
+ *
+ * Here we can put some description in order not to forget what is this all
+ * about.
+ */
+
+/**
+ * Implements hook_cron().
+ */
+function resaver_cron() {
+  
+  set_time_limit(480); // Do not run more than 8 minutes.
+
+  $hour = (int) date('G');
+  // Run only between 1:00 and 6:59, bail out at other times.
+  /* if ($hour < 1 || $hour > 6) {
+    return;
+  } */
+
+  // Parameters.
+  // Minimum seconds between updates. 86400 seconds = 24 hours.
+  $interval = 86400;
+  // The number of nodes to process in one cron run. Too many can cause the
+  // site to slow down while it runs or even time out. If needed to process a
+  // lot of nodes, it is better to run cron more often.
+  $batch = 70;
+  // The node type to act upon. This is 'machine name' ('Type' column in
+  // Administer > Content management > Content types).
+  $type = 'domainnamechecker';
+
+  $updated = array();
+  $sql = "SELECT nid FROM {node} WHERE changed < %d AND type = '%s' ORDER BY changed ASC LIMIT 0, %d";
+  $result = db_query($sql, time() - $interval, $type, $batch);
+
+  while ($nid = db_result($result)) {
+    $node = node_load($nid);
+    node_save($node);
+    $updated[] = $node->title;
+  }
+
+  // Save a message to 'Recent log entries'.
+  if (count($updated) > 0) {
+    watchdog('resaver', 'Updated domains screenshot: %nodes', array('%nodes' => implode(', ', $updated)));
+  }
+}
