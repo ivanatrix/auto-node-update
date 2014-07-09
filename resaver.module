@@ -17,9 +17,9 @@ function resaver_cron() {
 
   $hour = (int) date('G');
   // Run only between 1:00 and 6:59, bail out at other times.
-  /* if ($hour < 1 || $hour > 6) {
+  if ($hour < 1 || $hour > 6) {
     return;
-  } */
+  }
 
   // Parameters.
   // Minimum seconds between updates. 86400 seconds = 24 hours.
